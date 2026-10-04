@@ -1,6 +1,62 @@
 import { test, expect, type Response } from '@playwright/test';
 
 test.describe('Game Listing and Navigation', () => {
+  test('searches game titles case-insensitively and combines with category filters', async ({ page }) => {
+    await page.goto('/');
+    const firstGame = page.getByTestId('game-card').first();
+    const title = await firstGame.getAttribute('data-game-title');
+    const categoryId = await firstGame.getAttribute('data-game-category-id');
+    if (!title || !categoryId) {
+      throw new Error('Expected the first catalog game to have a title and category.');
+    }
+
+    const titleSearch = page.getByRole('searchbox', { name: 'Search by game title' });
+    await expect(titleSearch).toHaveAttribute('data-testid', 'game-title-search');
+    await titleSearch.focus();
+    await titleSearch.pressSequentially(title.toLowerCase());
+    await titleSearch.press('Enter');
+    await expect(titleSearch).toBeFocused();
+    await expect(page).toHaveURL('/');
+
+    const visibleCards = page.locator('[data-testid="game-card"]:not([hidden])');
+    await expect(visibleCards).not.toHaveCount(0);
+    const visibleTitles = await visibleCards.evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute('data-game-title') ?? ''),
+    );
+    expect(visibleTitles.every((visibleTitle) => visibleTitle.toLowerCase().includes(title.toLowerCase())))
+      .toBe(true);
+
+    await page.locator(`input[name="categoryIds"][value="${categoryId}"]`).check();
+    const visibleCategoryIds = await visibleCards.evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute('data-game-category-id')),
+    );
+    expect(visibleCategoryIds.every((visibleCategoryId) => visibleCategoryId === categoryId)).toBe(true);
+    await expect(visibleCards).not.toHaveCount(0);
+    await expect(page.getByTestId('filter-results-status')).toContainText('Showing');
+  });
+
+  test('shows a no-results message and clears the title search', async ({ page }) => {
+    await page.goto('/');
+    const titleSearch = page.getByRole('searchbox', { name: 'Search by game title' });
+    const gameCards = page.getByTestId('game-card');
+
+    await titleSearch.fill('no-game-title-can-match-this');
+
+    await expect(page.getByTestId('game-search-empty-state')).toBeVisible();
+    await expect(page.getByTestId('filter-results-status')).toHaveText(
+      'No games match your search and selected filters.',
+    );
+    await expect(page.locator('[data-testid="game-card"]:not([hidden])')).toHaveCount(0);
+
+    await page.getByTestId('clear-game-filters').click();
+
+    await expect(titleSearch).toHaveValue('');
+    await expect(page.getByTestId('game-search-empty-state')).toBeHidden();
+    await expect(page.locator('[data-testid="game-card"]:not([hidden])')).toHaveCount(
+      await gameCards.count(),
+    );
+  });
+
   test('filters games by multiple categories and publisher together', async ({ page }) => {
     await page.goto('/');
     const gameCards = page.getByTestId('game-card');
@@ -69,10 +125,12 @@ test.describe('Game Listing and Navigation', () => {
 
     await categoryFilter.check();
     await page.getByTestId('publisher-filter').selectOption({ index: 1 });
+    await page.getByTestId('game-title-search').fill('game');
     await page.getByTestId('clear-game-filters').click();
 
     await expect(categoryFilter).not.toBeChecked();
     await expect(page.getByTestId('publisher-filter')).toHaveValue('');
+    await expect(page.getByTestId('game-title-search')).toHaveValue('');
     await expect(page.locator('[data-testid="game-card"]:not([hidden])')).toHaveCount(
       await gameCards.count(),
     );

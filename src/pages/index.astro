@@ -37,7 +37,20 @@ const publisherOptions = [...publishers].map(([id, name]) => ({ id, name }))
           aria-label="Game filters"
           data-testid="game-filters"
         >
-          <div class="grid items-end gap-6 md:grid-cols-[2fr_1fr_auto]">
+          <div class="grid items-end gap-6 md:grid-cols-[2fr_1fr_1fr_auto]">
+            <div>
+              <label class="mb-2 block font-medium text-slate-100" for="game-title-search">
+                Search by game title
+              </label>
+              <input
+                class="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                type="search"
+                id="game-title-search"
+                name="title"
+                data-testid="game-title-search"
+              />
+            </div>
+
             <fieldset>
               <legend class="mb-3 font-medium text-slate-100">Categories</legend>
               <div class="flex flex-wrap gap-x-5 gap-y-3">
@@ -93,6 +106,9 @@ const publisherOptions = [...publishers].map(([id, name]) => ({ id, name }))
       ) : (
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="games-grid">
           {games.map((game) => <GameCard game={game} />)}
+          <div class="col-span-full" data-testid="game-search-empty-state" hidden>
+            <EmptyState text="No games match your search and selected filters." />
+          </div>
         </div>
       )}
     </div>
@@ -108,39 +124,47 @@ const publisherOptions = [...publishers].map(([id, name]) => ({ id, name }))
     const categoryInputs = Array.from(
       filterForm.querySelectorAll<HTMLInputElement>('input[name="categoryIds"]'),
     );
+    const titleSearch = filterForm.querySelector<HTMLInputElement>('[name="title"]');
     const publisherSelect = filterForm.querySelector<HTMLSelectElement>('[name="publisherId"]');
     const resultsStatus = filterForm.querySelector<HTMLElement>('[data-testid="filter-results-status"]');
+    const emptyState = gamesGrid.querySelector<HTMLElement>('[data-testid="game-search-empty-state"]');
     const clearButton = filterForm.querySelector<HTMLButtonElement>('[data-testid="clear-game-filters"]');
 
     const updateVisibleGames = (): void => {
       const selectedCategories = new Set(
         categoryInputs.filter((input) => input.checked).map((input) => input.value),
       );
+      const normalizedTitle = titleSearch?.value.trim().toLowerCase() ?? '';
       const selectedPublisher = publisherSelect?.value ?? '';
       let visibleCount = 0;
 
       for (const card of gameCards) {
+        const titleMatches = (card.dataset.gameTitle ?? '').toLowerCase().includes(normalizedTitle);
         const categoryMatches =
           selectedCategories.size === 0 ||
           selectedCategories.has(card.dataset.gameCategoryId ?? '');
         const publisherMatches =
           selectedPublisher === '' || card.dataset.gamePublisherId === selectedPublisher;
-        const isVisible = categoryMatches && publisherMatches;
+        const isVisible = titleMatches && categoryMatches && publisherMatches;
 
         card.hidden = !isVisible;
         if (isVisible) visibleCount++;
       }
 
+      if (emptyState) emptyState.hidden = visibleCount !== 0;
       if (resultsStatus) {
         resultsStatus.textContent =
           visibleCount === 0
-            ? 'No games match the selected filters.'
+            ? 'No games match your search and selected filters.'
             : `Showing ${visibleCount} of ${gameCards.length} games.`;
       }
     };
 
+    filterForm.addEventListener('submit', (event) => event.preventDefault());
     filterForm.addEventListener('change', updateVisibleGames);
+    titleSearch?.addEventListener('input', updateVisibleGames);
     clearButton?.addEventListener('click', () => {
+      if (titleSearch) titleSearch.value = '';
       for (const input of categoryInputs) input.checked = false;
       if (publisherSelect) publisherSelect.value = '';
       updateVisibleGames();
