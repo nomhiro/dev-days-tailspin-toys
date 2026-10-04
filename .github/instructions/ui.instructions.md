@@ -20,6 +20,13 @@ Refer to technology-specific instruction files:
 
 ## Core Principles
 
+### Comments and Documentation
+
+- Comments must explain **why** code exists or why a non-obvious decision was made; do not restate what the code already says.
+- Prefer clear names and structure over comments that narrate mechanics. Remove comments that only paraphrase the next line.
+- Keep comments and documentation current whenever related code changes. Outdated comments are bugs.
+- Follow [`typescript.instructions.md`](typescript.instructions.md) for formatting and TSDoc conventions, [`drizzle.instructions.md`](drizzle.instructions.md) for exported data-layer functions, and [`astro.instructions.md`](astro.instructions.md) for reusable component APIs.
+
 ### Testability
 
 - Every interactive element MUST include a `data-testid` attribute

@@ -13,6 +13,8 @@ Unit tests run with **Vitest** (`npm run test:unit`). They cover the two highest
 > [!IMPORTANT]
 > Keep tests independent of the Astro runtime. Helpers accept an **injectable `db`** argument; tests pass an in-memory database, pages pass the real client. Never start an Astro server to unit test data logic.
 
+Follow [`typescript.instructions.md`](typescript.instructions.md) for formatting conventions.
+
 ## File Structure
 
 - Co-locate tests next to the code: `transforms.test.ts` beside `transforms.ts`, `games.test.ts` beside `games.ts`.
@@ -31,13 +33,13 @@ import { describe, it, expect } from 'vitest';
 import { ratingFromTitle } from './transforms';
 
 describe('ratingFromTitle', () => {
-  it('is deterministic and within range', () => {
-    const a = ratingFromTitle('Code Quest');
-    const b = ratingFromTitle('Code Quest');
-    expect(a).toBe(b);
-    expect(a).toBeGreaterThanOrEqual(3.0);
-    expect(a).toBeLessThanOrEqual(5.0);
-  });
+    it('is deterministic and within range', () => {
+        const a = ratingFromTitle('Code Quest');
+        const b = ratingFromTitle('Code Quest');
+        expect(a).toBe(b);
+        expect(a).toBeGreaterThanOrEqual(3.0);
+        expect(a).toBeLessThanOrEqual(5.0);
+    });
 });
 ```
 
@@ -53,19 +55,19 @@ import { createTestDatabase } from '../../db/test-helpers';
 import { getAllGames, getGameById } from './games';
 
 describe('getAllGames', () => {
-  let db: Awaited<ReturnType<typeof createTestDatabase>>;
+    let db: Awaited<ReturnType<typeof createTestDatabase>>;
 
-  beforeEach(async () => {
-    db = await createTestDatabase();
-    // …seed publishers, categories, games…
-  });
+    beforeEach(async () => {
+        db = await createTestDatabase();
+        // …seed publishers, categories, games…
+    });
 
-  it('returns games ordered by title with their relations', async () => {
-    const games = await getAllGames(db);
-    const titles = games.map((g) => g.title);
-    expect(titles).toEqual([...titles].sort());
-    expect(games[0].category).not.toBeNull();
-  });
+    it('returns games ordered by title with their relations', async () => {
+        const games = await getAllGames(db);
+        const titles = games.map((g) => g.title);
+        expect(titles).toEqual([...titles].sort());
+        expect(games[0].category).not.toBeNull();
+    });
 });
 ```
 

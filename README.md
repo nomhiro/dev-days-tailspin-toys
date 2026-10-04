@@ -106,6 +106,10 @@ npm run test:unit   # Vitest unit tests (transforms + data-access helpers)
 npm run test:e2e    # Playwright E2E tests (builds + previews the static site first)
 ```
 
+## Coding standards
+
+See the repository instructions for the [UI component strategy](.github/instructions/ui.instructions.md), [Astro components](.github/instructions/astro.instructions.md), [data layer](.github/instructions/drizzle.instructions.md), and [TypeScript formatting and documentation](.github/instructions/typescript.instructions.md). Comments should explain intent rather than restate code; exported data-layer functions and reusable component Props document their contracts with TSDoc. ESLint enforces TypeScript formatting.
+
 ## Linting
 
 The frontend uses ESLint to enforce code quality across TypeScript and Astro files. Run it with:
