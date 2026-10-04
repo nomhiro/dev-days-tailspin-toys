@@ -4,16 +4,13 @@ import eslintPluginAstro from "eslint-plugin-astro";
 import globals from "globals";
 
 export default [
-  // Global ignores
   {
     ignores: ["dist/", "node_modules/", ".astro/", "db/migrations/"],
   },
 
-  // Base JavaScript/TypeScript recommended rules
   js.configs.recommended,
   ...tseslint.configs.recommended,
 
-  // Global settings for all files
   {
     languageOptions: {
       globals: {
@@ -22,7 +19,7 @@ export default [
       },
     },
     rules: {
-      // Allow unused variables prefixed with _ (common convention for intentional skips)
+      // Leading underscores make intentionally unused bindings explicit.
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
@@ -30,14 +27,37 @@ export default [
     },
   },
 
-  // Astro files
   ...eslintPluginAstro.configs.recommended,
 
-  // TypeScript-specific overrides
   {
     files: ["**/*.ts"],
+    ignores: ["**/*.astro"],
     languageOptions: {
       parser: tseslint.parser,
+    },
+    rules: {
+      "eol-last": ["error", "always"],
+      quotes: ["error", "single", { avoidEscape: true }],
+      semi: ["error", "always"],
+      "comma-dangle": ["error", "always-multiline"],
+    },
+  },
+  {
+    files: [
+      "db/**/*.ts",
+      "src/lib/**/*.ts",
+      "src/types/**/*.ts",
+      "drizzle.config.ts",
+      "vitest.config.ts",
+    ],
+    rules: {
+      indent: ["error", 4, { SwitchCase: 1 }],
+    },
+  },
+  {
+    files: ["e2e-tests/**/*.ts", "playwright.config.ts"],
+    rules: {
+      indent: ["error", 2, { SwitchCase: 1 }],
     },
   },
 ];
